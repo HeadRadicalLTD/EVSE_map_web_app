@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>제원 사진 촬영</title>
+  <style>
+    :root { color-scheme: light; font-family: "Malgun Gothic", system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #f0fdf4; color: #172033; }
+    main { width: min(100%, 520px); min-height: 100vh; margin: 0 auto; padding: max(20px, env(safe-area-inset-top)) 18px max(24px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 16px; }
+    .card { background: #fff; border: 1px solid #bbf7d0; border-radius: 18px; padding: 20px; box-shadow: 0 10px 30px rgba(20, 83, 45, .10); }
+    h1 { margin: 0 0 6px; color: #14532d; font-size: 24px; }
+    .connection { margin: 0; font-size: 14px; color: #64748b; }
+    .connection.on { color: #15803d; font-weight: 700; }
+    .station-label { margin-top: 22px; font-size: 13px; color: #64748b; }
+    .station { margin: 4px 0 0; font-size: clamp(38px, 12vw, 58px); line-height: 1; font-weight: 900; letter-spacing: -.04em; color: #166534; }
+    .filename { margin: 10px 0 0; padding: 9px 10px; border-radius: 9px; background: #f1f5f9; color: #334155; font-size: 15px; font-weight: 700; word-break: break-all; }
+    .warning { margin: 16px 0 0; color: #b45309; font-size: 14px; font-weight: 700; }
+    .capture { display: block; width: 100%; min-height: 68px; margin-top: 18px; padding: 18px; border: 0; border-radius: 14px; background: #16a34a; color: #fff; text-align: center; font-size: 20px; font-weight: 900; cursor: pointer; }
+    .capture.disabled { background: #94a3b8; pointer-events: none; }
+    input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .status { min-height: 48px; margin: 0; padding: 12px 14px; border-radius: 12px; background: #fff; border: 1px solid #dbeafe; color: #475569; font-size: 14px; line-height: 1.55; }
+    .status.ok { border-color: #86efac; color: #166534; font-weight: 700; }
+    .status.error { border-color: #fecaca; color: #b91c1c; font-weight: 700; }
+    .preview { display: none; width: 100%; max-height: 34vh; object-fit: contain; border-radius: 12px; background: #0f172a; }
+    .small { margin: 0; color: #64748b; font-size: 12px; text-align: center; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card">
+      <h1>제원 사진 촬영</h1>
+      <p id="connection" class="connection">계측자 화면과 연결 확인 중…</p>
+      <div class="station-label">현재 충전소</div>
+      <div id="station" class="station">대기 중</div>
+      <div id="filename" class="filename">계측자가 충전소를 선택하면 파일명이 표시됩니다.</div>
+      <p id="warning" class="warning">번호가 표시된 뒤 촬영하세요.</p>
+      <label id="capture-label" class="capture disabled" for="photo-input">📷 제원 사진 촬영</label>
+      <input id="photo-input" type="file" accept="image/*" capture="environment">
+    </section>
+    <img id="preview" class="preview" alt="촬영 사진 미리보기">
+    <p id="status" class="status">연결 상태를 확인하고 있습니다.</p>
+    <p class="small">사진은 선택된 충전소의 <b>station_no-04.jpg</b>로 저장됩니다.</p>
+  </main>
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var SERVER = String(params.get("server") || "");
+      var ROOM = String(params.get("room") || "");
+      var currentStation = "";
+      var polling = false;
+      var jsonpCounter = 0;
+      var input = document.getElementById("photo-input");
+      var captureLabel = document.getElementById("capture-label");
+      var statusEl = document.getElementById("status");
+      var connectionEl = document.getElementById("connection");
+      var stationEl = document.getElementById("station");
+      var filenameEl = document.getElementById("filename");
+      var warningEl = document.getElementById("warning");
+      var previewEl = document.getElementById("preview");
+
+      function setStatus(text, type) {
+        statusEl.textContent = text;
+        statusEl.className = "status" + (type ? " " + type : "");
+      }
+      function jsonp(query, onSuccess, onError) {
+        var callback = "__evseDriverPage" + (++jsonpCounter);
+        var script = document.createElement("script");
+        var done = false;
+        var timer = setTimeout(function () { cleanup(); onError(new Error("서버 응답 시간이 초과됐습니다.")); }, 12000);
+        function cleanup() {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          try { delete window[callback]; } catch (error) { window[callback] = undefined; }
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+        window[callback] = function (result) {
+          cleanup();
+          if (result && result.ok) onSuccess(result);
+          else onError(new Error((result && result.error) || "연결 서버 오류"));
+        };
+        query.callback = callback;
+        script.onerror = function () { cleanup(); onError(new Error("연결 서버에 접속하지 못했습니다.")); };
+        script.src = SERVER + "?" + Object.keys(query).map(function (key) {
+          return encodeURIComponent(key) + "=" + encodeURIComponent(query[key]);
+        }).join("&") + "&_=" + Date.now();
+        document.head.appendChild(script);
+      }
+      function deviceName() {
+        return /iPhone|iPad|iPod/i.test(navigator.userAgent) ? "iPhone" :
+          (/Android/i.test(navigator.userAgent) ? "Android" : "모바일 브라우저");
+      }
+      function renderState(result) {
+        polling = false;
+        connectionEl.textContent = "✅ 계측자 화면과 연결됨";
+        connectionEl.className = "connection on";
+        currentStation = (result.state && result.state.station) || "";
+        if (currentStation) {
+          stationEl.textContent = currentStation;
+          filenameEl.textContent = currentStation + "-04.jpg";
+          warningEl.textContent = "위 번호가 현재 충전소와 맞는지 확인하고 촬영하세요.";
+          captureLabel.classList.remove("disabled");
+        } else {
+          stationEl.textContent = "대기 중";
+          filenameEl.textContent = "계측자가 충전소를 선택하면 파일명이 표시됩니다.";
+          warningEl.textContent = "번호가 표시된 뒤 촬영하세요.";
+          captureLabel.classList.add("disabled");
+        }
+      }
+      function poll() {
+        if (!SERVER || !ROOM || polling) return;
+        polling = true;
+        jsonp({ action: "driver", room: ROOM, device: deviceName() }, renderState, function (error) {
+          polling = false;
+          connectionEl.textContent = "연결 오류";
+          connectionEl.className = "connection";
+          setStatus(error.message, "error");
+        });
+      }
+      function loadImage(file) {
+        return new Promise(function (resolve, reject) {
+          var reader = new FileReader();
+          reader.onerror = reject;
+          reader.onload = function () {
+            var img = new Image();
+            img.onerror = reject;
+            img.onload = function () { resolve(img); };
+            img.src = reader.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+      async function toJpeg(file) {
+        var img = await loadImage(file);
+        var scale = Math.min(1, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
+        var canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+        var ctx = canvas.getContext("2d", { alpha: false });
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL("image/jpeg", .9);
+      }
+      function waitForUpload(startedAt, filename, attempts) {
+        if (attempts <= 0) {
+          setStatus("전송 확인이 늦어지고 있습니다. 계측자에게 저장 여부를 확인하세요.", "error");
+          captureLabel.classList.remove("disabled");
+          return;
+        }
+        jsonp({ action: "status", room: ROOM }, function (result) {
+          var state = result.state || {};
+          if (state.lastUploadName === filename && Number(state.lastUploadAt || 0) >= startedAt) {
+            setStatus("✅ 저장 완료: " + filename, "ok");
+            captureLabel.classList.remove("disabled");
+            input.value = "";
+          } else {
+            setTimeout(function () { waitForUpload(startedAt, filename, attempts - 1); }, 1200);
+          }
+        }, function () {
+          setTimeout(function () { waitForUpload(startedAt, filename, attempts - 1); }, 1200);
+        });
+      }
+      input.addEventListener("change", async function () {
+        var file = input.files && input.files[0];
+        if (!file || !currentStation) return;
+        var stationAtCapture = currentStation;
+        var filename = stationAtCapture + "-04.jpg";
+        captureLabel.classList.add("disabled");
+        setStatus("사진을 JPG로 변환하고 있습니다.");
+        try {
+          var jpeg = await toJpeg(file);
+          previewEl.src = jpeg;
+          previewEl.style.display = "block";
+          setStatus(filename + " 업로드 중…");
+          var body = new URLSearchParams();
+          body.set("action", "upload");
+          body.set("room", ROOM);
+          body.set("dataUrl", jpeg);
+          var startedAt = Date.now();
+          await fetch(SERVER, { method: "POST", mode: "no-cors", body: body });
+          waitForUpload(startedAt, filename, 20);
+        } catch (error) {
+          setStatus("사진을 처리하지 못했습니다. 다시 촬영해 주세요.", "error");
+          captureLabel.classList.remove("disabled");
+          input.value = "";
+        }
+      });
+      if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(SERVER) || !ROOM) {
+        setStatus("연결 주소가 올바르지 않습니다. QR을 다시 촬영하세요.", "error");
+      } else {
+        poll();
+        setInterval(poll, 2000);
+      }
+    })();
+  </script>
+</body>
+</html>
