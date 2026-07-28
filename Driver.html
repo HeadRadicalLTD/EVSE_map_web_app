@@ -55,6 +55,8 @@
       var relaySource = null;
       var relayVersion = 0;
       var lastRelayAt = 0;
+      var relayConnectedAt = 0;
+      var relayReadyTimer = null;
       var input = document.getElementById("photo-input");
       var captureLabel = document.getElementById("capture-label");
       var statusEl = document.getElementById("status");
@@ -116,6 +118,10 @@
       function relayTopic(suffix) {
         return ROOM ? "evse-" + ROOM + (suffix || "") : "";
       }
+      function isRelayConnected() {
+        return relayConnectedAt &&
+          Date.now() - relayConnectedAt < 15000;
+      }
       function relayPost(topic, message) {
         if (!topic || typeof fetch !== "function") return Promise.reject();
         return fetch("https://ntfy.sh/" + encodeURIComponent(topic), {
@@ -130,6 +136,14 @@
           body: message
         });
       }
+      function announceRelayReady() {
+        relayPost(relayTopic("-ack"), "ready").then(function (response) {
+          if (!response.ok) throw new Error("relay");
+          relayConnectedAt = Date.now();
+          connectionEl.textContent = "✅ 계측자 화면과 실시간 연결됨";
+          connectionEl.className = "connection on";
+        }).catch(function () {});
+      }
       function startRelay() {
         if (!ROOM || typeof EventSource !== "function") return;
         if (relaySource) relaySource.close();
@@ -139,8 +153,14 @@
           "/sse?since=all"
         );
         relaySource.onopen = function () {
-          relayPost(relayTopic("-ack"), "ready").catch(function () {});
+          announceRelayReady();
         };
+        if (relayReadyTimer) clearInterval(relayReadyTimer);
+        relayReadyTimer = setInterval(function () {
+          if (relaySource && relaySource.readyState === 1) {
+            announceRelayReady();
+          }
+        }, 5000);
         relaySource.onmessage = function (event) {
           try {
             var envelope = JSON.parse(event.data);
@@ -151,6 +171,7 @@
             if (version < relayVersion) return;
             relayVersion = version;
             lastRelayAt = Date.now();
+            relayConnectedAt = Date.now();
             applyStation(station);
             connectionEl.textContent = "✅ 계측자 화면과 실시간 연결됨";
             connectionEl.className = "connection on";
@@ -159,7 +180,9 @@
       }
       function renderState(result) {
         polling = false;
-        connectionEl.textContent = "✅ 계측자 화면과 연결됨";
+        connectionEl.textContent = isRelayConnected()
+          ? "✅ 계측자 화면과 실시간 연결됨"
+          : "✅ 계측자 화면과 연결됨";
         connectionEl.className = "connection on";
         if (!lastRelayAt || Date.now() - lastRelayAt > 15000) {
           applyStation((result.state && result.state.station) || "");
@@ -177,9 +200,15 @@
           renderState(result);
         }, function () {
           polling = false;
-          connectionEl.textContent = "연결 확인 지연 · 자동 재시도 중";
-          connectionEl.className = "connection";
-          setStatus("마지막 충전소 번호를 유지합니다.");
+          if (isRelayConnected()) {
+            connectionEl.textContent = "✅ 계측자 화면과 실시간 연결됨";
+            connectionEl.className = "connection on";
+            setStatus("실시간 연결을 유지하고 있습니다.");
+          } else {
+            connectionEl.textContent = "연결 확인 지연 · 자동 재시도 중";
+            connectionEl.className = "connection";
+            setStatus("마지막 충전소 번호를 유지합니다.");
+          }
         });
       }
       function loadImage(file) {

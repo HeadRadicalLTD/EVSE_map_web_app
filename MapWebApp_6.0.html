@@ -205,9 +205,14 @@
         var selectionRetryTimer = null;
         var relayAckSource = null;
         var relayAckRoom = "";
+        var relayConnectedAt = 0;
 
         function relayTopic(suffix) {
           return room ? "evse-" + room.token + (suffix || "") : "";
+        }
+        function isRelayConnected() {
+          return relayConnectedAt &&
+            Date.now() - relayConnectedAt < 15000;
         }
         function relayPost(topic, message) {
           if (!topic || typeof fetch !== "function") return Promise.reject();
@@ -254,8 +259,14 @@
           relayAckSource.onmessage = function (event) {
             try {
               var envelope = JSON.parse(event.data);
-              if (envelope.message === "ready" && latestSelection) {
-                publishRelaySelection(latestSelection);
+              if (envelope.message === "ready") {
+                relayConnectedAt = Date.now();
+                if (modal.style.display === "flex") {
+                  setStatus("✅ 운전자 실시간 연결됨", true);
+                }
+                if (latestSelection) {
+                  publishRelaySelection(latestSelection);
+                }
               }
             } catch (error) {}
           };
@@ -300,7 +311,7 @@
             return;
           }
           var url = DRIVER_PAGE +
-            "?v=602&server=" + encodeURIComponent(SERVER) +
+            "?v=603&server=" + encodeURIComponent(SERVER) +
             "&room=" + encodeURIComponent(room.token);
           new QRCode(qrBox, { text:url, width:208, height:208, colorDark:"#0f172a", colorLight:"#ffffff", correctLevel:QRCode.CorrectLevel.M });
         }
@@ -343,10 +354,18 @@
           if (!room || modal.style.display !== "flex") return;
           jsonp({ action:"status", room:room.token }, function (result) {
             var state = result.state || {};
-            setStatus(state.connected ? "✅ 운전자 연결됨 · " + (state.driverDevice || "모바일") : "운전자 연결 대기 중", state.connected);
+            if (isRelayConnected()) {
+              setStatus("✅ 운전자 실시간 연결됨", true);
+            } else {
+              setStatus(state.connected ? "✅ 운전자 연결됨 · " + (state.driverDevice || "모바일") : "운전자 연결 대기 중", state.connected);
+            }
             stationBox.textContent = "현재 충전소: " + (state.station || currentStation || "선택 대기");
           }, function (error) {
-            setStatus("연결 확인 지연 · 자동 재시도 중", false);
+            if (isRelayConnected()) {
+              setStatus("✅ 운전자 실시간 연결됨", true);
+            } else {
+              setStatus("연결 확인 지연 · 자동 재시도 중", false);
+            }
           });
         }
         function openModal() {
