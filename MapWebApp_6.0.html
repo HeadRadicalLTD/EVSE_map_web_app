@@ -200,12 +200,18 @@
         var currentStation = "";
         var timer = null;
         var counter = 0;
+        var selectionVersion = Date.now();
+        var latestSelection = null;
+        var selectionRetryTimer = null;
 
         function jsonp(query, success, failure) {
           var callback = "__evseMapJsonp" + (++counter);
           var script = document.createElement("script");
           var done = false;
-          var timeout = setTimeout(function () { cleanup(); failure(new Error("서버 응답 시간이 초과됐습니다.")); }, 12000);
+          var timeout = setTimeout(function () {
+            cleanup();
+            failure(new Error("연결 확인이 지연되고 있습니다."));
+          }, 20000);
           function cleanup() {
             if (done) return;
             done = true;
@@ -236,7 +242,9 @@
             qrBox.textContent = "QR코드를 만들지 못했습니다.";
             return;
           }
-          var url = DRIVER_PAGE + "?server=" + encodeURIComponent(SERVER) + "&room=" + encodeURIComponent(room.token);
+          var url = DRIVER_PAGE +
+            "?v=601&server=" + encodeURIComponent(SERVER) +
+            "&room=" + encodeURIComponent(room.token);
           new QRCode(qrBox, { text:url, width:208, height:208, colorDark:"#0f172a", colorLight:"#ffffff", correctLevel:QRCode.CorrectLevel.M });
         }
         function saveRoom(value) {
@@ -261,6 +269,7 @@
             setStatus("운전자 연결 대기 중", false);
             renderQr();
             poll();
+            if (currentStation) selectStation(currentStation);
           }, function (error) {
             room = null;
             localStorage.removeItem(ROOM_KEY);
@@ -276,7 +285,7 @@
             setStatus(state.connected ? "✅ 운전자 연결됨 · " + (state.driverDevice || "모바일") : "운전자 연결 대기 중", state.connected);
             stationBox.textContent = "현재 충전소: " + (state.station || currentStation || "선택 대기");
           }, function (error) {
-            setStatus(error.message, false);
+            setStatus("연결 확인 지연 · 자동 재시도 중", false);
           });
         }
         function openModal() {
@@ -287,6 +296,7 @@
             roomCode.textContent = "작업방 번호: " + room.code;
             renderQr();
             poll();
+            if (currentStation) selectStation(currentStation);
           } else {
             createRoom();
           }
@@ -299,13 +309,57 @@
           if (timer) clearInterval(timer);
           timer = null;
         }
+        function sendSelection(request) {
+          if (!room || request !== latestSelection || request.completed) return;
+          request.attempts += 1;
+          jsonp({
+            action:"select",
+            room:room.token,
+            station:request.station,
+            version:request.version
+          }, function (result) {
+            if (request !== latestSelection || request.completed) return;
+            var selected = result && result.state && result.state.station;
+            if (selected !== request.station) return;
+            request.completed = true;
+            if (selectionRetryTimer) clearTimeout(selectionRetryTimer);
+            selectionRetryTimer = null;
+            if (modal.style.display === "flex") {
+              var connected = Boolean(result.state && result.state.connected);
+              setStatus(
+                connected
+                  ? "✅ 운전자 연결됨 · 번호 전달 완료"
+                  : "번호 전달 완료 · 운전자 응답 대기",
+                connected
+              );
+            }
+          }, function () {
+            if (request === latestSelection && !request.completed &&
+                modal.style.display === "flex") {
+              setStatus("번호 전달 지연 · 자동 재시도 중", false);
+            }
+          });
+          if (request.attempts < 6) {
+            if (selectionRetryTimer) clearTimeout(selectionRetryTimer);
+            selectionRetryTimer = setTimeout(function () {
+              sendSelection(request);
+            }, 2500);
+          }
+        }
         function selectStation(station) {
           currentStation = String(station || "");
           stationBox.textContent = "현재 충전소: " + (currentStation || "선택 대기");
           if (!room || !currentStation) return;
-          jsonp({ action:"select", room:room.token, station:currentStation }, function () {}, function (error) {
-            if (modal.style.display === "flex") setStatus(error.message, false);
-          });
+          selectionVersion = Math.max(selectionVersion + 1, Date.now());
+          latestSelection = {
+            station: currentStation,
+            version: selectionVersion,
+            attempts: 0,
+            completed: false
+          };
+          if (selectionRetryTimer) clearTimeout(selectionRetryTimer);
+          selectionRetryTimer = null;
+          sendSelection(latestSelection);
         }
         window.__driverStationSelected = selectStation;
         openButton.addEventListener("click", openModal);

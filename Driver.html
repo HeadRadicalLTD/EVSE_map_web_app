@@ -51,6 +51,7 @@
       var currentStation = "";
       var polling = false;
       var jsonpCounter = 0;
+      var lastHeartbeatAt = 0;
       var input = document.getElementById("photo-input");
       var captureLabel = document.getElementById("capture-label");
       var statusEl = document.getElementById("status");
@@ -68,7 +69,10 @@
         var callback = "__evseDriverPage" + (++jsonpCounter);
         var script = document.createElement("script");
         var done = false;
-        var timer = setTimeout(function () { cleanup(); onError(new Error("서버 응답 시간이 초과됐습니다.")); }, 12000);
+        var timer = setTimeout(function () {
+          cleanup();
+          onError(new Error("연결 확인이 지연되고 있습니다."));
+        }, 8000);
         function cleanup() {
           if (done) return;
           done = true;
@@ -112,11 +116,18 @@
       function poll() {
         if (!SERVER || !ROOM || polling) return;
         polling = true;
-        jsonp({ action: "driver", room: ROOM, device: deviceName() }, renderState, function (error) {
+        var now = Date.now();
+        var action = now - lastHeartbeatAt >= 9000 ? "driver" : "status";
+        var query = { action: action, room: ROOM };
+        if (action === "driver") query.device = deviceName();
+        jsonp(query, function (result) {
+          if (action === "driver") lastHeartbeatAt = Date.now();
+          renderState(result);
+        }, function () {
           polling = false;
-          connectionEl.textContent = "연결 오류";
+          connectionEl.textContent = "연결 확인 지연 · 자동 재시도 중";
           connectionEl.className = "connection";
-          setStatus(error.message, "error");
+          setStatus("마지막 충전소 번호를 유지합니다.");
         });
       }
       function loadImage(file) {
@@ -192,7 +203,7 @@
         setStatus("연결 주소가 올바르지 않습니다. QR을 다시 촬영하세요.", "error");
       } else {
         poll();
-        setInterval(poll, 2000);
+        setInterval(poll, 1500);
       }
     })();
   </script>
