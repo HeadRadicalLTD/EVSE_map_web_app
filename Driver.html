@@ -52,6 +52,9 @@
       var polling = false;
       var jsonpCounter = 0;
       var lastHeartbeatAt = 0;
+      var relaySource = null;
+      var relayVersion = 0;
+      var lastRelayAt = 0;
       var input = document.getElementById("photo-input");
       var captureLabel = document.getElementById("capture-label");
       var statusEl = document.getElementById("status");
@@ -96,11 +99,8 @@
         return /iPhone|iPad|iPod/i.test(navigator.userAgent) ? "iPhone" :
           (/Android/i.test(navigator.userAgent) ? "Android" : "모바일 브라우저");
       }
-      function renderState(result) {
-        polling = false;
-        connectionEl.textContent = "✅ 계측자 화면과 연결됨";
-        connectionEl.className = "connection on";
-        currentStation = (result.state && result.state.station) || "";
+      function applyStation(station) {
+        currentStation = String(station || "");
         if (currentStation) {
           stationEl.textContent = currentStation;
           filenameEl.textContent = currentStation + "-04.jpg";
@@ -111,6 +111,58 @@
           filenameEl.textContent = "계측자가 충전소를 선택하면 파일명이 표시됩니다.";
           warningEl.textContent = "번호가 표시된 뒤 촬영하세요.";
           captureLabel.classList.add("disabled");
+        }
+      }
+      function relayTopic(suffix) {
+        return ROOM ? "evse-" + ROOM + (suffix || "") : "";
+      }
+      function relayPost(topic, message) {
+        if (!topic || typeof fetch !== "function") return Promise.reject();
+        return fetch("https://ntfy.sh/" + encodeURIComponent(topic), {
+          method: "POST",
+          mode: "cors",
+          cache: "no-store",
+          headers: {
+            "Content-Type": "text/plain;charset=UTF-8",
+            "Cache": "no",
+            "Firebase": "no"
+          },
+          body: message
+        });
+      }
+      function startRelay() {
+        if (!ROOM || typeof EventSource !== "function") return;
+        if (relaySource) relaySource.close();
+        relaySource = new EventSource(
+          "https://ntfy.sh/" +
+          encodeURIComponent(relayTopic("")) +
+          "/sse?since=all"
+        );
+        relaySource.onopen = function () {
+          relayPost(relayTopic("-ack"), "ready").catch(function () {});
+        };
+        relaySource.onmessage = function (event) {
+          try {
+            var envelope = JSON.parse(event.data);
+            var message = JSON.parse(envelope.message || "{}");
+            var station = String(message.station || "");
+            var version = Number(message.version || 0);
+            if (!/^\d{2}-\d{3}$/.test(station)) return;
+            if (version < relayVersion) return;
+            relayVersion = version;
+            lastRelayAt = Date.now();
+            applyStation(station);
+            connectionEl.textContent = "✅ 계측자 화면과 실시간 연결됨";
+            connectionEl.className = "connection on";
+          } catch (error) {}
+        };
+      }
+      function renderState(result) {
+        polling = false;
+        connectionEl.textContent = "✅ 계측자 화면과 연결됨";
+        connectionEl.className = "connection on";
+        if (!lastRelayAt || Date.now() - lastRelayAt > 15000) {
+          applyStation((result.state && result.state.station) || "");
         }
       }
       function poll() {
@@ -202,6 +254,7 @@
       if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(SERVER) || !ROOM) {
         setStatus("연결 주소가 올바르지 않습니다. QR을 다시 촬영하세요.", "error");
       } else {
+        startRelay();
         poll();
         setInterval(poll, 1500);
       }

@@ -203,6 +203,63 @@
         var selectionVersion = Date.now();
         var latestSelection = null;
         var selectionRetryTimer = null;
+        var relayAckSource = null;
+        var relayAckRoom = "";
+
+        function relayTopic(suffix) {
+          return room ? "evse-" + room.token + (suffix || "") : "";
+        }
+        function relayPost(topic, message) {
+          if (!topic || typeof fetch !== "function") return Promise.reject();
+          return fetch("https://ntfy.sh/" + encodeURIComponent(topic), {
+            method: "POST",
+            mode: "cors",
+            cache: "no-store",
+            headers: {
+              "Content-Type": "text/plain;charset=UTF-8",
+              "Cache": "no",
+              "Firebase": "no"
+            },
+            body: message
+          }).then(function (response) {
+            if (!response.ok) throw new Error("relay");
+            return response;
+          });
+        }
+        function publishRelaySelection(request) {
+          if (!room || !request) return;
+          [0, 600, 1600].forEach(function (delay) {
+            setTimeout(function () {
+              if (request !== latestSelection) return;
+              relayPost(
+                relayTopic(""),
+                JSON.stringify({
+                  station: request.station,
+                  version: request.version
+                })
+              ).catch(function () {});
+            }, delay);
+          });
+        }
+        function ensureRelayAck() {
+          if (!room || typeof EventSource !== "function") return;
+          if (relayAckSource && relayAckRoom === room.token) return;
+          if (relayAckSource) relayAckSource.close();
+          relayAckRoom = room.token;
+          relayAckSource = new EventSource(
+            "https://ntfy.sh/" +
+            encodeURIComponent(relayTopic("-ack")) +
+            "/sse?since=all"
+          );
+          relayAckSource.onmessage = function (event) {
+            try {
+              var envelope = JSON.parse(event.data);
+              if (envelope.message === "ready" && latestSelection) {
+                publishRelaySelection(latestSelection);
+              }
+            } catch (error) {}
+          };
+        }
 
         function jsonp(query, success, failure) {
           var callback = "__evseMapJsonp" + (++counter);
@@ -243,18 +300,22 @@
             return;
           }
           var url = DRIVER_PAGE +
-            "?v=601&server=" + encodeURIComponent(SERVER) +
+            "?v=602&server=" + encodeURIComponent(SERVER) +
             "&room=" + encodeURIComponent(room.token);
           new QRCode(qrBox, { text:url, width:208, height:208, colorDark:"#0f172a", colorLight:"#ffffff", correctLevel:QRCode.CorrectLevel.M });
         }
         function saveRoom(value) {
           room = value;
           localStorage.setItem(ROOM_KEY, JSON.stringify(value));
+          ensureRelayAck();
         }
         function restoreRoom() {
           try {
             var value = JSON.parse(localStorage.getItem(ROOM_KEY) || "null");
-            if (value && value.token && value.code) room = value;
+            if (value && value.token && value.code) {
+              room = value;
+              ensureRelayAck();
+            }
           } catch (error) {
             localStorage.removeItem(ROOM_KEY);
           }
@@ -357,6 +418,7 @@
             attempts: 0,
             completed: false
           };
+          publishRelaySelection(latestSelection);
           if (selectionRetryTimer) clearTimeout(selectionRetryTimer);
           selectionRetryTimer = null;
           sendSelection(latestSelection);
