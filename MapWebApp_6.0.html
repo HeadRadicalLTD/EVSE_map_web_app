@@ -983,7 +983,7 @@ document.addEventListener("DOMContentLoaded", function() {
     var st = currentStatus(id);
     return st ? STATUS_INFO[st.code] : null;
   }
-  var ISSUE_LABELS = ["출입 불가", "선 없음", "고장", "kW 변경", "불법주차", "충전 오류", "위치 확인 불가", "위치 이동", "단선"];
+  var ISSUE_LABELS = ["출입 불가", "선 없음", "고장", "kW 변경", "불법주차", "충전 오류", "위치 확인 불가", "위치 이동", "단선", "회원카드 결제 불가"];
   var ISSUE_LOOKUP = {};
   ISSUE_LABELS.forEach(function(label) { ISSUE_LOOKUP[label] = true; });
   var openIssuePickerId = null;
@@ -2024,7 +2024,8 @@ document.addEventListener("DOMContentLoaded", function() {
       var si = statusInfo(c.id);
       var done = isVisitComplete(c.id);
       var issueReason = currentIssues(c.id).join("|");
-      lines.push([CSV_LIST_VERSION, exportId, c.gp, c.nm, c.ad, done ? "O" : "X", done ? (visited[c.id] || "") : "", si ? si.label : "정상", issueReason, issueReason].map(csvField).join(","));
+      var exportStatus = issueReason ? "계측 불가" : (si ? si.label : "정상");
+      lines.push([CSV_LIST_VERSION, exportId, c.gp, c.nm, c.ad, done ? "O" : "X", done ? (visited[c.id] || "") : "", exportStatus, issueReason, issueReason].map(csvField).join(","));
     });
     return "\ufeff" + lines.join("\r\n");
   }
