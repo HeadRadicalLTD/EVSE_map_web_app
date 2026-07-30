@@ -150,6 +150,9 @@
         <input type="file" id="import-file" accept=".csv,text/csv" style="display:none;">
       </div>
     </div>
+    <button id="btn-driver-connect-mobile" class="mobile-driver-connect" type="button">
+      &#128247; 운전자 연결
+    </button>
     <div id="driver-connect-modal" role="dialog" aria-modal="true" aria-labelledby="driver-connect-title" style="
         display:none; position:fixed; inset:0; z-index:12000; padding:16px;
         background:rgba(15,23,42,0.68); align-items:center; justify-content:center;
@@ -189,7 +192,10 @@
         var SERVER = "https://script.google.com/macros/s/AKfycbxbJwVxLFTNCixMoA587jLVVkXGdrf6EPZqD5cD4V_B2hXdcK1-pFi2-dDHb-vYhTOA/exec";
         var DRIVER_PAGE = "https://headradicalltd.github.io/EVSE_map_web_app/Driver.html";
         var ROOM_KEY = "evse_driver_room_v2";
-        var openButton = document.getElementById("btn-driver-connect");
+        var openButtons = [
+          document.getElementById("btn-driver-connect"),
+          document.getElementById("btn-driver-connect-mobile")
+        ];
         var modal = document.getElementById("driver-connect-modal");
         var closeButton = document.getElementById("btn-driver-connect-close");
         var closeXButton = document.getElementById("btn-driver-connect-close-x");
@@ -445,7 +451,9 @@
           sendSelection(latestSelection);
         }
         window.__driverStationSelected = selectStation;
-        openButton.addEventListener("click", openModal);
+        openButtons.forEach(function (button) {
+          if (button) button.addEventListener("click", openModal);
+        });
         closeButton.addEventListener("click", closeModal);
         closeXButton.addEventListener("click", closeModal);
         newRoomButton.addEventListener("click", function () {
@@ -466,6 +474,34 @@
     <style>
       .leaflet-top.leaflet-left .leaflet-control-layers {
         margin-top: 12px;
+      }
+      .mobile-driver-connect {
+        display: none;
+      }
+      @media (max-width: 768px) {
+        #btn-driver-connect {
+          display: none;
+        }
+        .mobile-driver-connect {
+          display: block;
+          position: fixed;
+          left: 50%;
+          bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+          transform: translateX(-50%);
+          z-index: 9998;
+          width: min(220px, calc(100vw - 32px));
+          min-height: 46px;
+          padding: 10px 16px;
+          border: 1px solid #15803d;
+          border-radius: 9px;
+          background: #16a34a;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.28);
+          color: #ffffff;
+          cursor: pointer;
+          font-family: 'Malgun Gothic', Arial, sans-serif;
+          font-size: 14px;
+          font-weight: 700;
+        }
       }
       @media (max-width: 600px) {
         #field-panel.panel-collapsed {
