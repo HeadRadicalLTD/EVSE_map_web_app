@@ -140,10 +140,12 @@
         <div id="region-status" style="margin-bottom:8px; max-height:28vh; overflow-y:auto; font-size:12px; line-height:1.65;"></div>
         <div style="display:flex; flex-direction:column; gap:4px;">
           <button id="btn-locate" style="padding:6px 8px; border:1px solid #94a3b8; border-radius:5px; background:#f8fafc; cursor:pointer; font-family:inherit; font-size:12px;">&#128205; 내 위치</button>
+          <button id="btn-driver-connect" type="button" style="padding:6px 8px; border:1px solid #15803d; border-radius:5px; background:#16a34a; cursor:pointer; font-family:inherit; font-size:12px; font-weight:700; color:#ffffff;">&#128247; 운전자 연결</button>
           <button id="btn-export" style="padding:6px 8px; border:1px solid #94a3b8; border-radius:5px; background:#f8fafc; cursor:pointer; font-family:inherit; font-size:12px;">&#11015; 방문기록 CSV 내보내기</button>
           <button id="btn-import" style="padding:6px 8px; border:1px solid #94a3b8; border-radius:5px; background:#f8fafc; cursor:pointer; font-family:inherit; font-size:12px;">&#11014; 방문기록 CSV 가져오기</button>
-          <button id="btn-reset" style="padding:6px 8px; border:1px solid #94a3b8; border-radius:5px; background:#f8fafc; cursor:pointer; font-family:inherit; font-size:12px; color:#b91c1c;">방문기록 초기화</button>
-          <button id="btn-driver-connect" type="button" style="padding:6px 8px; border:1px solid #15803d; border-radius:5px; background:#16a34a; cursor:pointer; font-family:inherit; font-size:12px; font-weight:700; color:#ffffff;">&#128247; 운전자 연결</button>
+          <div style="margin-top:8px; padding-top:8px; border-top:1px solid #fecaca;">
+            <button id="btn-reset" style="width:100%; padding:6px 8px; border:1px solid #94a3b8; border-radius:5px; background:#f8fafc; cursor:pointer; font-family:inherit; font-size:12px; color:#b91c1c;">방문기록 초기화</button>
+          </div>
         </div>
         <input type="file" id="import-file" accept=".csv,text/csv" style="display:none;">
       </div>
