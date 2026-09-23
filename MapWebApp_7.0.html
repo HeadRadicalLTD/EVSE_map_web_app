@@ -129,7 +129,6 @@
             <button type="button" class="filter-btn active" data-filter-group="status" data-filter="all">전체</button>
             <button type="button" class="filter-btn" data-filter-group="status" data-filter="in_use">모두 사용중</button>
             <button type="button" class="filter-btn" data-filter-group="status" data-filter="issue">계측 불가</button>
-            <button type="button" class="filter-btn" data-filter-group="status" data-filter="unvisited">미방문</button>
             <button type="button" class="filter-btn" data-filter-group="status" data-filter="visited">방문완료</button>
           </div>
         </div>
@@ -947,6 +946,25 @@ document.addEventListener("DOMContentLoaded", function() {
     });
     return changed;
   }
+  // Remove the original all-station Leaflet markers, then keep only field-visited stations.
+  var stationCoords = {};
+  CHARGERS.forEach(function(c) {
+    if (isFinite(c.lat) && isFinite(c.lon)) stationCoords[c.lat.toFixed(7) + "," + c.lon.toFixed(7)] = true;
+  });
+  function removeStationMarkers(group) {
+    if (!group || typeof group.eachLayer !== "function") return;
+    group.eachLayer(function(layer) {
+      if (layer && typeof layer.getLatLng === "function") {
+        var ll = layer.getLatLng();
+        if (stationCoords[ll.lat.toFixed(7) + "," + ll.lng.toFixed(7)]) group.removeLayer(layer);
+      } else if (layer && typeof layer.eachLayer === "function") {
+        removeStationMarkers(layer);
+      }
+    });
+  }
+  MAP.eachLayer(function(layer) { if (layer !== LAYER) removeStationMarkers(layer); });
+  CHARGERS = CHARGERS.filter(function(c) { return c.field_visit === "measured" || c.field_visit === "failed"; });
+
   var BYID = {};
   var BYDISPLAYNO = {};
   CHARGERS.forEach(function(c) { BYID[c.id] = c; if (c.display_no) BYDISPLAYNO[c.display_no] = c.id; });
