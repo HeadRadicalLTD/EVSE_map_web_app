@@ -1538,6 +1538,7 @@ document.addEventListener("DOMContentLoaded", function() {
     var matches = CHARGERS.filter(function(c) {
       if (!filterMatches(c)) return false;
       return String(c.id || "").toLowerCase().indexOf(q) >= 0 ||
+        String(c.display_no || "").toLowerCase().indexOf(q) >= 0 ||
         String(c.nm || "").toLowerCase().indexOf(q) >= 0;
     }).slice(0, 20);
     if (!matches.length) {
