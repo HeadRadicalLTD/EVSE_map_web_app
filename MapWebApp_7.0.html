@@ -960,11 +960,27 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
   MAP.eachLayer(function(layer) { if (layer !== LAYER) removeStationMarkers(layer); });
+  // `id` is the current station serial number from the total list.  The
+  // embedded `display_no` values are the former field-measurement sequence,
+  // so preserve them only for importing older visit-history CSV files.
+  var LEGACY_DISPLAY_NO = {};
+  CHARGERS.forEach(function(c) {
+    if (c.display_no) LEGACY_DISPLAY_NO[c.display_no] = c.id;
+    c.display_no = c.id;
+  });
   CHARGERS = CHARGERS.filter(function(c) { return c.field_visit === "measured" || c.field_visit === "failed"; });
 
   var BYID = {};
   var BYDISPLAYNO = {};
-  CHARGERS.forEach(function(c) { BYID[c.id] = c; if (c.display_no) BYDISPLAYNO[c.display_no] = c.id; });
+  var BYLEGACYDISPLAYNO = {};
+  CHARGERS.forEach(function(c) {
+    BYID[c.id] = c;
+    if (c.display_no) BYDISPLAYNO[c.display_no] = c.id;
+  });
+  Object.keys(LEGACY_DISPLAY_NO).forEach(function(legacyNo) {
+    var currentId = LEGACY_DISPLAY_NO[legacyNo];
+    if (BYID[currentId]) BYLEGACYDISPLAYNO[legacyNo] = currentId;
+  });
 
   var seedVisited = {}, seedStatus = {}, seedIssues = {};
   CHARGERS.forEach(function(c) {
@@ -2191,8 +2207,8 @@ document.addEventListener("DOMContentLoaded", function() {
     function resolveImportId(row) {
       var rawId = String(row[idCol] || "").trim();
       var rowVersion = versionCol >= 0 ? String(row[versionCol] || "").trim() : "";
-      if (/^tracking-/.test(rowVersion)) return BYDISPLAYNO[rawId] || (BYID[rawId] ? rawId : "");
-      return BYID[rawId] ? rawId : (BYDISPLAYNO[rawId] || "");
+      if (/^tracking-/.test(rowVersion)) return BYDISPLAYNO[rawId] || BYLEGACYDISPLAYNO[rawId] || (BYID[rawId] ? rawId : "");
+      return BYID[rawId] ? rawId : (BYDISPLAYNO[rawId] || BYLEGACYDISPLAYNO[rawId] || "");
     }
 
     var rawDataRows = rows.slice(1).filter(function(row) {
