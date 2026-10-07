@@ -1540,6 +1540,16 @@ document.addEventListener("DOMContentLoaded", function() {
       return String(c.id || "").toLowerCase().indexOf(q) >= 0 ||
         String(c.display_no || "").toLowerCase().indexOf(q) >= 0 ||
         String(c.nm || "").toLowerCase().indexOf(q) >= 0;
+    }).sort(function(a, b) {
+      function searchScore(c) {
+        var displayNo = String(c.display_no || "").toLowerCase();
+        var id = String(c.id || "").toLowerCase();
+        if (displayNo === q) return 0;
+        if (displayNo.indexOf(q) >= 0) return 1;
+        if (id === q) return 2;
+        return 3;
+      }
+      return searchScore(a) - searchScore(b);
     }).slice(0, 20);
     if (!matches.length) {
       var empty = document.createElement("div");
