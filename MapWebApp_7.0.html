@@ -1535,7 +1535,10 @@ document.addEventListener("DOMContentLoaded", function() {
       setSearchPanelExpanded(focused);
       return;
     }
-    var matches = CHARGERS.filter(function(c) {
+    var exactDisplayMatches = CHARGERS.filter(function(c) {
+      return filterMatches(c) && String(c.display_no || "").toLowerCase() === q;
+    });
+    var matches = exactDisplayMatches.length ? exactDisplayMatches : CHARGERS.filter(function(c) {
       if (!filterMatches(c)) return false;
       return String(c.id || "").toLowerCase().indexOf(q) >= 0 ||
         String(c.display_no || "").toLowerCase().indexOf(q) >= 0 ||
