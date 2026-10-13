@@ -1328,7 +1328,8 @@ document.addEventListener("DOMContentLoaded", function() {
   var selectedRegionGp = null;
   var activePriorityFilter = null;
   var activeOutputFilters = {};
-  var activeStatusFilter = null;
+  // 상태의 기본 전체는 현장 계측을 완료한 충전소만 뜻한다.
+  var activeStatusFilter = "all";
   var PRIORITY_FILTERS = { priority1: true, priority2: true };
   var OUTPUT_FILTERS = { kw3: true, kw7: true, kw11: true };
   var STATUS_FILTERS = { issue: true, unvisited: true, visited: true };
@@ -1429,6 +1430,7 @@ document.addEventListener("DOMContentLoaded", function() {
     var status = hasFilterOption(opts, "status") ? opts.status : activeStatusFilter;
     if (priority && !priorityFilterMatches(c, priority)) return false;
     if (!outputFilterSelectionMatches(c, output)) return false;
+    if (status === "all") status = "visited";
     if (status && panelStateCode(c) !== status) return false;
     return true;
   }
@@ -1458,7 +1460,7 @@ document.addEventListener("DOMContentLoaded", function() {
       }
       if (matchesFilters(c, { status: null })) {
         var code = panelStateCode(c);
-        counts.status.all++;
+        if (code === "visited") counts.status.all++;
         if (Object.prototype.hasOwnProperty.call(counts.status, code)) counts.status[code]++;
       }
     });
@@ -1517,7 +1519,8 @@ document.addEventListener("DOMContentLoaded", function() {
       btn.innerHTML = filterButtonHtml(key, groupCounts[key] || 0);
       if ((group === "output" && key === "all" && !active.length) ||
           (group === "output" && key !== "all" && !!activeOutputFilters[key]) ||
-          (group !== "output" && key === "all" && !active) ||
+          (group === "status" && key === "all" && active === "all") ||
+          (group !== "output" && group !== "status" && key === "all" && !active) ||
           (group !== "output" && key !== "all" && key === active)) btn.classList.add("active");
       else btn.classList.remove("active");
     });
@@ -1636,7 +1639,7 @@ document.addEventListener("DOMContentLoaded", function() {
     selectedRegionGp = (idx >= 0 && idx < REGION_ORDER.length) ? REGION_ORDER[idx] : null;
     activePriorityFilter = null;
     resetOutputFilters();
-    activeStatusFilter = null;
+    activeStatusFilter = "all";
     renderPanel();
     if (selectedRegionGp) focusRegionOnMap(selectedRegionGp);
     else focusAllOnMap();
@@ -1989,17 +1992,17 @@ document.addEventListener("DOMContentLoaded", function() {
       btn.addEventListener("click", function() {
         var group = btn.getAttribute("data-filter-group") || "";
         var key = btn.getAttribute("data-filter") || "all";
-        if (key === "all") {
+        if (group === "status") {
+          activeStatusFilter = (key === "all" || activeStatusFilter === key) ? "all" : key;
+        } else if (key === "all") {
           activePriorityFilter = null;
           resetOutputFilters();
-          activeStatusFilter = null;
+          activeStatusFilter = "all";
         } else if (group === "priority") {
           activePriorityFilter = activePriorityFilter === key ? null : key;
         } else if (group === "output") {
           if (activeOutputFilters[key]) delete activeOutputFilters[key];
           else activeOutputFilters[key] = true;
-        } else if (group === "status") {
-          activeStatusFilter = activeStatusFilter === key ? null : key;
         }
         renderPanel();
       });
