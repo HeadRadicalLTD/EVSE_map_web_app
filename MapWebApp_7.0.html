@@ -1682,7 +1682,7 @@ document.addEventListener("DOMContentLoaded", function() {
     rows.push('<div class="region-status-row" data-region-index="' + REGION_ORDER.length + '" style="display:flex; justify-content:space-between; gap:8px; padding:1px 5px; border-radius:3px;' +
       (!selectedRegionGp ? " background:#dbeafe; font-weight:bold;" : "") + '">' +
       '<span style="white-space:nowrap;">' + (!selectedRegionGp ? "&#9654; " : "") + (REGION_ORDER.length + 1) + ". 전체</span>" +
-      '<span style="white-space:nowrap;">' + totalVisited + "/" + CHARGERS.length + "</span></div>");
+      '<span style="white-space:nowrap;">' + totalVisited + "/" + (REGION_ORDER.length * REGION_TARGET) + "</span></div>");
     box.innerHTML = rows.join("");
     bindRegionRows(box);
   }
