@@ -34,7 +34,7 @@
     <div class="status"><span class="dot" id="syncDot"></span><span id="syncText">투표 현황을 불러오는 중입니다…</span></div>
     <div class="stepper"><div class="step active" id="step1">1. 내 캐릭터 선택</div><div class="step" id="step2">2. 식당 투표</div></div>
 
-    <section id="pickPage"><h2>내 이름의 캐릭터를 골라 주세요</h2><p class="intro">선택을 확정하면 바꿀 수 없습니다. 다른 분이 먼저 고른 캐릭터는 선택할 수 없습니다.</p><div class="people" id="people"></div><div class="actions"><span class="hint" id="pickHint">캐릭터를 한 명 선택해 주세요.</span><button class="primary" id="confirmPick" disabled>다음으로 →</button></div></section>
+    <section id="pickPage"><h2>내 이름의 캐릭터를 골라 주세요</h2><p class="intro">선택을 확정하면 바꿀 수 없습니다. 다른 분이 먼저 고른 캐릭터는 선택할 수 없습니다.</p><div class="people" id="people"></div><div class="actions"><span class="hint" id="pickHint">캐릭터를 한 명 선택해 주세요.</span><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="secondary" id="resetCharacter" hidden>캐릭터 다시 선택</button><button class="primary" id="confirmPick" disabled>다음으로 →</button></div></div></section>
 
     <section id="votePage" hidden><div class="welcome"><div><strong id="welcomeName">반갑습니다!</strong><div style="font-size:13px;margin-top:3px;">원하는 식당을 모두 고른 뒤 아래 확인 버튼을 눌러 주세요.</div></div><div class="top-actions"><button class="secondary" id="backToPick">← 처음 화면</button><button class="secondary" id="refresh">↻ 새로고침</button></div></div><h2>회식 장소에 투표해 주세요</h2><p class="intro">식당 이름 아래의 링크를 누르면 네이버지도에서 식당 정보를 확인할 수 있습니다.</p><div class="restaurants" id="restaurants"></div><div class="vote-confirm"><span id="draftInfo">원하는 식당을 체크해 주세요.</span><button class="primary" id="submitVotes">투표 확인 및 반영</button></div><div class="result"><div class="result-head"><strong>현재 투표 현황</strong><span id="voteSummary">0명 참여</span></div><div id="resultBars"></div><div class="voters" id="voterList"></div></div></section>
     <footer>회식 투표 · 변경 사항은 잠시 후 모든 참여자에게 반영됩니다.</footer>
@@ -56,7 +56,7 @@
       {id:'r3', name:'정마루 감자탕뼈해장국', note:'분모자가 들어있는 뼈찜이 맛있습니다. 사진 참고 필수!', url:'https://map.naver.com/p/search/%EC%A0%95%EB%A7%88%EB%A3%A8%EA%B0%90%EC%9E%90%ED%83%95%EB%BC%88%ED%95%B4%EC%9E%A5%EA%B5%AD?c=17.97,0,0,0,dh&placePath=%2Fhome%3Ffrom%3Dmap%26fromPanelNum%3D1%26additionalHeight%3D76%26timestamp%3D202610301307%26locale%3Dko%26svcName%3Dmap_pcv5%26searchText%3D%EC%A0%95%EB%A7%88%EB%A3%A8%EA%B0%90%EC%9E%90%ED%83%95%EB%BC%88%ED%95%B4%EC%9E%A5%EA%B5%AD'},
       {id:'r4', name:'골치연구소', note:'회식 후보', url:'https://map.naver.com/p/search/%EA%B3%A8%EC%B9%98%EC%97%B0%EA%B5%AC%EC%86%8C?c=20.00,0,0,0,dh&placePath=%2Fmenu%3FadditionalHeight%3D76%26fromPanelNum%3D1%26locale%3Dko%26searchText%3D%EA%B3%A8%EC%B9%98%EC%97%B0%EA%B5%AC%EC%86%8C%26svcName%3Dmap_pcv5%26timestamp%3D202610301314'}
     ];
-    let events = [], selected = null, myName = localStorage.getItem(STORAGE_KEY) || '', pendingName = '', draftChoices = null, showFirstPage = false;
+    let events = [], selected = null, myName = localStorage.getItem(STORAGE_KEY) || '', pendingName = '', draftChoices = null, showFirstPage = false, modalMode = 'claim';
     const $ = id => document.getElementById(id);
     const setStatus = (text, kind='on') => { $('syncText').textContent = text; $('syncDot').className = 'dot '+kind; };
     const stamp = () => Date.now() + '-' + Math.random().toString(36).slice(2,8);
@@ -65,6 +65,7 @@
       const claims = {}, votes = {};
       [...events].sort((a,b)=>(a.time||0)-(b.time||0)).forEach(e => {
         if (e.type === 'claim' && !claims[e.name]) claims[e.name] = e;
+        if (e.type === 'release' && claims[e.name]) { delete claims[e.name]; delete votes[e.name]; }
         if (e.type === 'vote' && claims[e.name] && Array.isArray(e.choices)) votes[e.name] = e;
       });
       return {claims, votes};
@@ -116,13 +117,14 @@
     function render() {
       const s=state();
       const onVote=!!myName && !showFirstPage; $('pickPage').hidden=onVote; $('votePage').hidden=!onVote; $('step1').className='step '+(onVote?'done':'active'); $('step2').className='step '+(onVote?'active':'');
-      if (onVote) { $('welcomeName').textContent=myName+'님, 반갑습니다!'; renderVotes(); } else { if (myName) { selected=myName; $('pickHint').textContent='현재 '+myName+' 캐릭터로 확정되어 있습니다.'; $('confirmPick').disabled=false; $('confirmPick').textContent='식당 투표로 돌아가기 →'; } else { $('confirmPick').textContent='다음으로 →'; } renderPeople(); }
+      if (onVote) { $('welcomeName').textContent=myName+'님, 반갑습니다!'; renderVotes(); } else { if (myName) { selected=myName; $('pickHint').textContent='현재 '+myName+' 캐릭터로 확정되어 있습니다.'; $('confirmPick').disabled=false; $('confirmPick').textContent='식당 투표로 돌아가기 →'; } else { $('confirmPick').textContent='다음으로 →'; } $('resetCharacter').hidden=!(myName && showFirstPage); renderPeople(); }
     }
-    $('confirmPick').onclick=()=>{ if (myName && showFirstPage) { showFirstPage=false; render(); return; } if (!selected) return; pendingName=selected; $('modalTitle').textContent='이대로 식당 투표로 갈까요?'; $('modalText').textContent=selected+' 캐릭터는 확인 후 변경할 수 없습니다.'; $('modalOk').textContent='식당 투표로 이동'; $('modal').classList.add('show'); };
+    $('confirmPick').onclick=()=>{ if (myName && showFirstPage) { showFirstPage=false; render(); return; } if (!selected) return; modalMode='claim'; pendingName=selected; $('modalTitle').textContent='이대로 식당 투표로 갈까요?'; $('modalText').textContent=selected+' 캐릭터는 확인 후 변경할 수 없습니다.'; $('modalOk').textContent='식당 투표로 이동'; $('modal').classList.add('show'); };
     $('modalCancel').onclick=()=> $('modal').classList.remove('show');
-    $('modalOk').onclick=async()=>{ $('modal').classList.remove('show'); const s=state(); if (s.claims[pendingName]) { setStatus('다른 분이 먼저 선택했습니다. 다른 캐릭터를 골라 주세요.','error'); selected=null; renderPeople(); return; } myName=pendingName; localStorage.setItem(STORAGE_KEY,myName); render(); try { await send({tag:EVENT_TAG,type:'claim',name:pendingName,time:Date.now(),id:stamp()}); } catch (_) { setStatus('식당 투표 화면으로 이동했습니다. 공유 저장은 자동으로 다시 시도합니다.','error'); } };
+    $('modalOk').onclick=async()=>{ $('modal').classList.remove('show'); if (modalMode==='release') { const oldName=myName; try { await send({tag:EVENT_TAG,type:'release',name:oldName,time:Date.now(),id:stamp()}); myName=''; selected=null; draftChoices=null; localStorage.removeItem(STORAGE_KEY); showFirstPage=true; $('resetCharacter').hidden=true; render(); setStatus('캐릭터 선택이 해제되었습니다. 다시 골라 주세요.','on'); } catch (_) { setStatus('캐릭터 선택을 해제하지 못했습니다. 다시 눌러 주세요.','error'); } return; } const s=state(); if (s.claims[pendingName]) { setStatus('다른 분이 먼저 선택했습니다. 다른 캐릭터를 골라 주세요.','error'); selected=null; renderPeople(); return; } myName=pendingName; localStorage.setItem(STORAGE_KEY,myName); render(); try { await send({tag:EVENT_TAG,type:'claim',name:pendingName,time:Date.now(),id:stamp()}); } catch (_) { setStatus('식당 투표 화면으로 이동했습니다. 공유 저장은 자동으로 다시 시도합니다.','error'); } };
     $('refresh').onclick=load;
     $('backToPick').onclick=()=>{ showFirstPage=true; render(); window.scrollTo({top:0,behavior:'smooth'}); };
+    $('resetCharacter').onclick=()=>{ modalMode='release'; $('modalTitle').textContent='아.. 뭐하세요?'; $('modalText').textContent='캐릭터를 다시 고르면 기존 식당 투표도 초기화됩니다. 그래도 다시 고르시겠어요?'; $('modalOk').textContent='그래도 다시 고르기'; $('modal').classList.add('show'); };
     $('submitVotes').onclick=async()=>{ const button=$('submitVotes'); button.disabled=true; button.textContent='반영 중…'; try { const choices=[...(draftChoices||[])]; await send({tag:EVENT_TAG,type:'vote',name:myName,choices,time:Date.now(),id:stamp()}); draftChoices=null; render(); setStatus('투표가 반영되었습니다.', 'on'); } catch (_) { setStatus('투표를 저장하지 못했습니다. 다시 눌러 주세요.','error'); } finally { button.disabled=false; button.textContent='투표 확인 및 반영'; } };
     load(); setInterval(load, 7000);
   </script>
