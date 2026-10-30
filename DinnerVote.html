@@ -21,7 +21,7 @@
     section[hidden] { display:none; } h2 { margin:0; font-size:24px; letter-spacing:-.045em; } .intro { margin:8px 0 23px; color:var(--sub); font-size:14px; line-height:1.6; }
     .people { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }.person { min-height:138px; padding:15px 12px; border:2px solid var(--line); border-radius:17px; background:#fff; cursor:pointer; text-align:center; transition:.18s ease; }.person:not(.taken):hover { border-color:#587aa9; transform:translateY(-2px); box-shadow:0 9px 17px #36547d18; }.person.selected { border-color:#314f84; background:#edf3fc; }.person.taken { cursor:not-allowed; opacity:.58; background:#f2efea; }.avatar { width:55px; height:55px; margin:0 auto 9px; border-radius:50%; display:grid; place-items:center; font-size:31px; background:linear-gradient(135deg,#fff1d1,#f0c36d); }.person:nth-child(2n) .avatar { background:linear-gradient(135deg,#d9eee4,#8ec4aa); }.person:nth-child(3n) .avatar { background:linear-gradient(135deg,#e4e0f7,#a9a2d4); }.person strong { display:block; font-size:15px; }.badge { display:inline-block; margin-top:6px; padding:3px 7px; border-radius:20px; background:#e8e4dc; color:#726c61; font-size:11px; font-weight:700; }.picked { background:#d9ecde; color:#28704c; }
     button { font:inherit; } .actions { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:25px; }.hint { color:var(--sub); font-size:13px; }.primary { border:0; border-radius:11px; padding:13px 18px; color:#fff; background:var(--navy); font-weight:800; cursor:pointer; box-shadow:0 6px 13px #263c6830; }.primary:disabled { cursor:not-allowed; opacity:.42; box-shadow:none; }.secondary { border:1px solid #ccd8e9; border-radius:10px; padding:10px 13px; color:#294b78; background:#f7faff; font-size:13px; font-weight:800; cursor:pointer; }
-    .welcome { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:16px 18px; margin:0 0 18px; border-radius:14px; background:#edf5ef; color:#275a42; }.welcome strong { font-size:17px; }.restaurants { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }.restaurant { padding:18px; border:1px solid var(--line); border-radius:17px; background:#fff; }.restaurant h3 { margin:0 0 7px; font-size:18px; letter-spacing:-.04em; }.restaurant p { min-height:43px; margin:0 0 15px; color:var(--sub); font-size:13px; line-height:1.55; }.map-link { display:inline-flex; gap:5px; align-items:center; color:#18814f; font-size:13px; font-weight:800; text-decoration:none; }.map-link:hover { text-decoration:underline; }.vote-row { display:flex; align-items:center; gap:8px; margin-top:18px; padding-top:14px; border-top:1px solid #eee8de; font-size:14px; font-weight:800; }.vote-row input { width:19px; height:19px; accent-color:#e05252; cursor:pointer; }.count { margin-left:auto; color:#a25928; font-size:12px; }.result { margin-top:23px; padding:18px; border-radius:15px; background:#f7f3ec; }.result-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }.result-head strong { font-size:16px; }.result-head span { color:var(--sub); font-size:12px; }.bar-row { display:grid; grid-template-columns:105px 1fr 40px; gap:9px; align-items:center; margin:10px 0; font-size:13px; }.bar { height:10px; border-radius:20px; overflow:hidden; background:#e4ddd2; }.fill { height:100%; border-radius:inherit; background:linear-gradient(90deg,#e17458,#e6ad41); transition:width .35s ease; }.voters { color:var(--sub); font-size:12px; line-height:1.6; }
+    .welcome { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:16px 18px; margin:0 0 18px; border-radius:14px; background:#edf5ef; color:#275a42; }.welcome strong { font-size:17px; }.restaurants { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }.restaurant { padding:18px; border:1px solid var(--line); border-radius:17px; background:#fff; }.restaurant h3 { margin:0 0 7px; font-size:18px; letter-spacing:-.04em; }.restaurant p { min-height:43px; margin:0 0 15px; color:var(--sub); font-size:13px; line-height:1.55; }.map-link { display:inline-flex; gap:5px; align-items:center; color:#18814f; font-size:13px; font-weight:800; text-decoration:none; }.map-link:hover { text-decoration:underline; }.vote-row { display:flex; align-items:center; gap:8px; margin-top:18px; padding-top:14px; border-top:1px solid #eee8de; font-size:14px; font-weight:800; }.vote-row input { width:19px; height:19px; accent-color:#e05252; cursor:pointer; }.count { margin-left:auto; color:#a25928; font-size:12px; }.vote-confirm { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:17px; padding:14px 16px; border:1px solid #d7e5dc; border-radius:13px; background:#f3f9f5; }.vote-confirm span { color:#35624c; font-size:13px; font-weight:700; }.result { margin-top:23px; padding:18px; border-radius:15px; background:#f7f3ec; }.result-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }.result-head strong { font-size:16px; }.result-head span { color:var(--sub); font-size:12px; }.bar-row { display:grid; grid-template-columns:105px 1fr 40px; gap:9px; align-items:center; margin:10px 0; font-size:13px; }.bar { height:10px; border-radius:20px; overflow:hidden; background:#e4ddd2; }.fill { height:100%; border-radius:inherit; background:linear-gradient(90deg,#e17458,#e6ad41); transition:width .35s ease; }.voters { color:var(--sub); font-size:12px; line-height:1.6; }
     .modal-bg { position:fixed; inset:0; z-index:9; display:none; align-items:center; justify-content:center; padding:20px; background:#15253a88; }.modal-bg.show { display:flex; }.modal { width:min(410px,100%); padding:25px; border-radius:19px; background:#fffdfb; box-shadow:0 20px 50px #0004; }.modal h3 { margin:0 0 8px; font-size:22px; }.modal p { margin:0; color:var(--sub); font-size:14px; line-height:1.6; }.modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:22px; }
     footer { padding-top:18px; text-align:center; color:#8c877e; font-size:12px; }
     @media (max-width:680px) { main { width:min(100% - 22px,680px); padding-top:16px; }.hero,section { padding:22px 18px; }.people,.restaurants { grid-template-columns:repeat(2,1fr); }.restaurant:last-child { grid-column:1/-1; }.bar-row { grid-template-columns:82px 1fr 34px; }.actions { align-items:flex-start; flex-direction:column; }.actions .primary { width:100%; }.welcome { align-items:flex-start; flex-direction:column; } }
@@ -35,7 +35,7 @@
 
     <section id="pickPage"><h2>내 이름의 캐릭터를 골라 주세요</h2><p class="intro">선택을 확정하면 바꿀 수 없습니다. 다른 분이 먼저 고른 캐릭터는 선택할 수 없습니다.</p><div class="people" id="people"></div><div class="actions"><span class="hint" id="pickHint">캐릭터를 한 명 선택해 주세요.</span><button class="primary" id="confirmPick" disabled>다음으로 →</button></div></section>
 
-    <section id="votePage" hidden><div class="welcome"><div><strong id="welcomeName">반갑습니다!</strong><div style="font-size:13px;margin-top:3px;">원하는 식당은 모두 선택하실 수 있고, 식당별 투표는 한 표만 가능합니다.</div></div><button class="secondary" id="refresh">↻ 새로고침</button></div><h2>회식 장소에 투표해 주세요</h2><p class="intro">식당 이름 아래의 링크를 누르면 네이버지도에서 식당 정보를 확인할 수 있습니다.</p><div class="restaurants" id="restaurants"></div><div class="result"><div class="result-head"><strong>현재 투표 현황</strong><span id="voteSummary">0명 참여</span></div><div id="resultBars"></div><div class="voters" id="voterList"></div></div></section>
+    <section id="votePage" hidden><div class="welcome"><div><strong id="welcomeName">반갑습니다!</strong><div style="font-size:13px;margin-top:3px;">원하는 식당을 모두 고른 뒤 아래 확인 버튼을 눌러 주세요.</div></div><button class="secondary" id="refresh">↻ 새로고침</button></div><h2>회식 장소에 투표해 주세요</h2><p class="intro">식당 이름 아래의 링크를 누르면 네이버지도에서 식당 정보를 확인할 수 있습니다.</p><div class="restaurants" id="restaurants"></div><div class="vote-confirm"><span id="draftInfo">원하는 식당을 체크해 주세요.</span><button class="primary" id="submitVotes">투표 확인 및 반영</button></div><div class="result"><div class="result-head"><strong>현재 투표 현황</strong><span id="voteSummary">0명 참여</span></div><div id="resultBars"></div><div class="voters" id="voterList"></div></div></section>
     <footer>회식 투표 · 변경 사항은 잠시 후 모든 참여자에게 반영됩니다.</footer>
   </main>
 
@@ -55,7 +55,7 @@
       {id:'r3', name:'정마루 감자탕뼈해장국', note:'분모자가 들어있는 뼈찜이 맛있습니다. 사진 참고 필수!', url:'https://map.naver.com/p/search/%EC%A0%95%EB%A7%88%EB%A3%A8%EA%B0%90%EC%9E%90%ED%83%95%EB%BC%88%ED%95%B4%EC%9E%A5%EA%B5%AD?c=17.97,0,0,0,dh&placePath=%2Fhome%3Ffrom%3Dmap%26fromPanelNum%3D1%26additionalHeight%3D76%26timestamp%3D202610301307%26locale%3Dko%26svcName%3Dmap_pcv5%26searchText%3D%EC%A0%95%EB%A7%88%EB%A3%A8%EA%B0%90%EC%9E%90%ED%83%95%EB%BC%88%ED%95%B4%EC%9E%A5%EA%B5%AD'},
       {id:'r4', name:'골치연구소', note:'회식 후보', url:'https://map.naver.com/p/search/%EA%B3%A8%EC%B9%98%EC%97%B0%EA%B5%AC%EC%86%8C?c=20.00,0,0,0,dh&placePath=%2Fmenu%3FadditionalHeight%3D76%26fromPanelNum%3D1%26locale%3Dko%26searchText%3D%EA%B3%A8%EC%B9%98%EC%97%B0%EA%B5%AC%EC%86%8C%26svcName%3Dmap_pcv5%26timestamp%3D202610301314'}
     ];
-    let events = [], selected = null, myName = localStorage.getItem(STORAGE_KEY) || '', pendingName = '';
+    let events = [], selected = null, myName = localStorage.getItem(STORAGE_KEY) || '', pendingName = '', draftChoices = null;
     const $ = id => document.getElementById(id);
     const setStatus = (text, kind='on') => { $('syncText').textContent = text; $('syncDot').className = 'dot '+kind; };
     const stamp = () => Date.now() + '-' + Math.random().toString(36).slice(2,8);
@@ -81,7 +81,9 @@
       setStatus('변경 사항을 저장하는 중입니다…');
       const res = await fetch('https://ntfy.sh/'+encodeURIComponent(TOPIC), {method:'POST', mode:'cors', cache:'no-store', body:JSON.stringify(event)});
       if (!res.ok) throw new Error('저장 실패');
-      await load();
+      events.push(event);
+      render();
+      load();
     }
     function renderPeople() {
       const s = state(), root = $('people'); root.innerHTML = '';
@@ -94,18 +96,22 @@
       });
     }
     function renderVotes() {
-      const s=state(), mine=(s.votes[myName]||{}).choices||[], root=$('restaurants'); root.innerHTML='';
+      const s=state(), mine=(s.votes[myName]||{}).choices||[], root=$('restaurants');
+      if (draftChoices === null) draftChoices=[...mine];
+      root.innerHTML='';
       restaurants.forEach(r=>{
         const voters=Object.entries(s.votes).filter(([,v])=>v.choices.includes(r.id)).map(([n])=>n);
         const card=document.createElement('article'); card.className='restaurant';
-        card.innerHTML='<h3>'+r.name+'</h3><p>'+r.note+'</p><a class="map-link" target="_blank" rel="noopener noreferrer" href="'+r.url+'">🗺️ 네이버지도에서 보기 ↗</a><label class="vote-row"><input type="checkbox" '+(mine.includes(r.id)?'checked':'')+'><span>여기에 투표하기</span><span class="count">'+voters.length+'표</span></label>';
-        card.querySelector('input').onchange=async e=>{ const next=e.target.checked?[...new Set([...mine,r.id])]:mine.filter(id=>id!==r.id); try { await send({tag:EVENT_TAG,type:'vote',name:myName,choices:next,time:Date.now(),id:stamp()}); } catch (_) { setStatus('저장하지 못했습니다. 인터넷 연결을 확인해 주세요.','error'); e.target.checked=!e.target.checked; } };
+        card.innerHTML='<h3>'+r.name+'</h3><p>'+r.note+'</p><a class="map-link" target="_blank" rel="noopener noreferrer" href="'+r.url+'">🗺️ 네이버지도에서 보기 ↗</a><label class="vote-row"><input type="checkbox" '+(draftChoices.includes(r.id)?'checked':'')+'><span>여기에 투표하기</span><span class="count">'+voters.length+'표</span></label>';
+        card.querySelector('input').onchange=e=>{ draftChoices=e.target.checked?[...new Set([...draftChoices,r.id])]:draftChoices.filter(id=>id!==r.id); updateDraftInfo(); };
         root.appendChild(card);
       });
       const total=Object.keys(s.votes).length; $('voteSummary').textContent=total+'명 참여'; $('resultBars').innerHTML='';
       restaurants.forEach(r=>{ const names=Object.entries(s.votes).filter(([,v])=>v.choices.includes(r.id)).map(([n])=>n); const pct=total?Math.round(names.length/total*100):0; const row=document.createElement('div'); row.className='bar-row'; row.innerHTML='<span>'+r.name+'</span><div class="bar"><div class="fill" style="width:'+pct+'%"></div></div><b>'+names.length+'표</b>'; $('resultBars').appendChild(row); });
       $('voterList').textContent = Object.keys(s.votes).length ? '투표 참여: '+Object.keys(s.votes).join(', ') : '아직 투표한 사람이 없습니다.';
+      updateDraftInfo();
     }
+    function updateDraftInfo() { if (!$('draftInfo')) return; const n=(draftChoices||[]).length; $('draftInfo').textContent=n ? n+'곳을 선택했습니다. 확인을 누르면 반영됩니다.' : '원하는 식당을 체크해 주세요. 선택 해제도 가능합니다.'; }
     function render() {
       const s=state();
       const onVote=!!myName; $('pickPage').hidden=onVote; $('votePage').hidden=!onVote; $('step1').className='step '+(onVote?'done':'active'); $('step2').className='step '+(onVote?'active':'');
@@ -115,6 +121,7 @@
     $('modalCancel').onclick=()=> $('modal').classList.remove('show');
     $('modalOk').onclick=async()=>{ $('modal').classList.remove('show'); const s=state(); if (s.claims[pendingName]) { setStatus('다른 분이 먼저 선택했습니다. 다른 캐릭터를 골라 주세요.','error'); selected=null; renderPeople(); return; } myName=pendingName; localStorage.setItem(STORAGE_KEY,myName); render(); try { await send({tag:EVENT_TAG,type:'claim',name:pendingName,time:Date.now(),id:stamp()}); } catch (_) { setStatus('식당 투표 화면으로 이동했습니다. 공유 저장은 자동으로 다시 시도합니다.','error'); } };
     $('refresh').onclick=load;
+    $('submitVotes').onclick=async()=>{ const button=$('submitVotes'); button.disabled=true; button.textContent='반영 중…'; try { const choices=[...(draftChoices||[])]; await send({tag:EVENT_TAG,type:'vote',name:myName,choices,time:Date.now(),id:stamp()}); draftChoices=null; render(); setStatus('투표가 반영되었습니다.', 'on'); } catch (_) { setStatus('투표를 저장하지 못했습니다. 다시 눌러 주세요.','error'); } finally { button.disabled=false; button.textContent='투표 확인 및 반영'; } };
     load(); setInterval(load, 7000);
   </script>
 </body>
