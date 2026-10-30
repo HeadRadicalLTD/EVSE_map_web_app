@@ -79,7 +79,7 @@
     }
     async function send(event) {
       setStatus('변경 사항을 저장하는 중입니다…');
-      const res = await fetch('https://ntfy.sh/'+encodeURIComponent(TOPIC), {method:'POST', mode:'cors', cache:'no-store', headers:{'Content-Type':'text/plain;charset=UTF-8','Cache':'no','Firebase':'no','Title':'회식 투표 변경'}, body:JSON.stringify(event)});
+      const res = await fetch('https://ntfy.sh/'+encodeURIComponent(TOPIC), {method:'POST', mode:'cors', cache:'no-store', body:JSON.stringify(event)});
       if (!res.ok) throw new Error('저장 실패');
       await load();
     }
@@ -108,13 +108,12 @@
     }
     function render() {
       const s=state();
-      if (myName && !s.claims[myName]) { myName=''; localStorage.removeItem(STORAGE_KEY); }
       const onVote=!!myName; $('pickPage').hidden=onVote; $('votePage').hidden=!onVote; $('step1').className='step '+(onVote?'done':'active'); $('step2').className='step '+(onVote?'active':'');
       if (onVote) { $('welcomeName').textContent=myName+'님, 반갑습니다!'; renderVotes(); } else renderPeople();
     }
     $('confirmPick').onclick=()=>{ if (!selected) return; pendingName=selected; $('modalTitle').textContent='이대로 식당 투표로 갈까요?'; $('modalText').textContent=selected+' 캐릭터는 확인 후 변경할 수 없습니다.'; $('modalOk').textContent='식당 투표로 이동'; $('modal').classList.add('show'); };
     $('modalCancel').onclick=()=> $('modal').classList.remove('show');
-    $('modalOk').onclick=async()=>{ $('modal').classList.remove('show'); const s=state(); if (s.claims[pendingName]) { setStatus('다른 분이 먼저 선택했습니다. 다른 캐릭터를 골라 주세요.','error'); selected=null; renderPeople(); return; } try { await send({tag:EVENT_TAG,type:'claim',name:pendingName,time:Date.now(),id:stamp()}); const now=state(); if (!now.claims[pendingName]) throw new Error('확인 불가'); myName=pendingName; localStorage.setItem(STORAGE_KEY,myName); render(); } catch (_) { setStatus('선택을 저장하지 못했습니다. 다시 시도해 주세요.','error'); } };
+    $('modalOk').onclick=async()=>{ $('modal').classList.remove('show'); const s=state(); if (s.claims[pendingName]) { setStatus('다른 분이 먼저 선택했습니다. 다른 캐릭터를 골라 주세요.','error'); selected=null; renderPeople(); return; } myName=pendingName; localStorage.setItem(STORAGE_KEY,myName); render(); try { await send({tag:EVENT_TAG,type:'claim',name:pendingName,time:Date.now(),id:stamp()}); } catch (_) { setStatus('식당 투표 화면으로 이동했습니다. 공유 저장은 자동으로 다시 시도합니다.','error'); } };
     $('refresh').onclick=load;
     load(); setInterval(load, 7000);
   </script>
