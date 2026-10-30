@@ -108,9 +108,10 @@
         card.querySelector('input').onchange=e=>{ draftChoices=e.target.checked?[...new Set([...draftChoices,r.id])]:draftChoices.filter(id=>id!==r.id); updateDraftInfo(); };
         root.appendChild(card);
       });
-      const total=Object.keys(s.votes).length; $('voteSummary').textContent=total+'명 참여'; $('resultBars').innerHTML='';
+      const participatingVotes=Object.entries(s.votes).filter(([,v])=>Array.isArray(v.choices) && v.choices.length>0);
+      const total=participatingVotes.length; $('voteSummary').textContent=total+'명 참여'; $('resultBars').innerHTML='';
       restaurants.forEach(r=>{ const names=Object.entries(s.votes).filter(([,v])=>v.choices.includes(r.id)).map(([n])=>n); const pct=total?Math.round(names.length/total*100):0; const row=document.createElement('div'); row.className='bar-row'; row.innerHTML='<span>'+r.name+'</span><div class="bar"><div class="fill" style="width:'+pct+'%"></div></div><b>'+names.length+'표</b>'; $('resultBars').appendChild(row); });
-      $('voterList').textContent = Object.keys(s.votes).length ? '투표 참여: '+Object.keys(s.votes).join(', ') : '아직 투표한 사람이 없습니다.';
+      $('voterList').textContent = participatingVotes.length ? '투표 참여: '+participatingVotes.map(([name])=>name).join(', ') : '아직 투표한 사람이 없습니다.';
       updateDraftInfo();
     }
     function updateDraftInfo() { if (!$('draftInfo')) return; const n=(draftChoices||[]).length; $('draftInfo').textContent=n ? n+'곳을 선택했습니다. 확인을 누르면 반영됩니다.' : '원하는 식당을 체크해 주세요. 선택 해제도 가능합니다.'; }
