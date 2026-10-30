@@ -79,7 +79,7 @@
     }
     async function send(event) {
       setStatus('변경 사항을 저장하는 중입니다…');
-      const res = await fetch('https://ntfy.sh/'+encodeURIComponent(TOPIC), {method:'POST', headers:{'Content-Type':'text/plain; charset=utf-8','Title':'회식 투표 변경'}, body:JSON.stringify(event)});
+      const res = await fetch('https://ntfy.sh/'+encodeURIComponent(TOPIC), {method:'POST', mode:'cors', cache:'no-store', headers:{'Content-Type':'text/plain;charset=UTF-8','Cache':'no','Firebase':'no','Title':'회식 투표 변경'}, body:JSON.stringify(event)});
       if (!res.ok) throw new Error('저장 실패');
       await load();
     }
